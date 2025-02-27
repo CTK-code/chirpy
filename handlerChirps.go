@@ -75,3 +75,22 @@ func (conf *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Reques
 	}
 	respondWithJson(w, 200, chirpArr)
 }
+
+func (conf *apiConfig) handlerGetChirp(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(r.PathValue("chirpID"))
+	if err != nil {
+		respondWithError(w, 400, "Error parsing chirpID", err)
+	}
+	ch, err := conf.db.GetChirpById(r.Context(), id)
+	if err != nil {
+		respondWithError(w, 404, "Could not retieve chirp", err)
+	}
+	response := chirp{
+		Id:        ch.ID,
+		CreatedAt: ch.CreatedAt,
+		UpdatedAt: ch.UpdatedAt,
+		Body:      ch.Body,
+		UserId:    ch.UserID,
+	}
+	respondWithJson(w, 200, response)
+}
