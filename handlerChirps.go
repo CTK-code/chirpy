@@ -9,6 +9,14 @@ import (
 	"github.com/google/uuid"
 )
 
+type chirp struct {
+	Id        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Body      string    `json:"body"`
+	UserId    uuid.UUID `json:"user_id"`
+}
+
 func (conf *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		Body   string    `json:"body"`
@@ -34,17 +42,36 @@ func (conf *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request
 		Body:   params.Body,
 		UserID: params.UserId,
 	}
-	chirp, err := conf.db.CreateChirp(r.Context(), chirpParams)
+	ch, err := conf.db.CreateChirp(r.Context(), chirpParams)
 	if err != nil {
 		respondWithError(w, 400, "Error inserting chirp", err)
 		return
 	}
-	response := res{
-		Id:        chirp.ID,
-		CreatedAt: chirp.CreatedAt,
-		UpdatedAt: chirp.UpdatedAt,
-		Body:      chirp.Body,
-		UserId:    chirp.UserID,
+	response := chirp{
+		Id:        ch.ID,
+		CreatedAt: ch.CreatedAt,
+		UpdatedAt: ch.UpdatedAt,
+		Body:      ch.Body,
+		UserId:    ch.UserID,
 	}
 	respondWithJson(w, 201, response)
+}
+
+func (conf *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Request) {
+	chirps, err := conf.db.GetAllChirps(r.Context())
+	if err != nil {
+		respondWithError(w, 400, "Error getting chirps", err)
+	}
+	chirpArr := []chirp{}
+	for _, ch := range chirps {
+		response := chirp{
+			Id:        ch.ID,
+			CreatedAt: ch.CreatedAt,
+			UpdatedAt: ch.UpdatedAt,
+			Body:      ch.Body,
+			UserId:    ch.UserID,
+		}
+		chirpArr = append(chirpArr, response)
+	}
+	respondWithJson(w, 200, chirpArr)
 }
