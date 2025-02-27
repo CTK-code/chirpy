@@ -1,13 +1,21 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 	"sync/atomic"
+
+	"github.com/CTK-code/chirpy/internal/database"
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 )
 
 type apiConfig struct {
 	fileserverHits atomic.Int32
+	dbQueries      *database.Queries
 }
 
 func (conf *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
@@ -20,6 +28,14 @@ func (conf *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
 
 func main() {
 	apiConf := apiConfig{}
+	godotenv.Load()
+	dbURL := os.Getenv("DB_URL")
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		log.Fatal("Connection to the DB failed")
+		return
+	}
+	apiConf.dbQueries = database.New(db)
 	mux := http.NewServeMux()
 	mux.Handle("/app/", apiConf.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(".")))))
 	mux.HandleFunc("GET /api/healthz", healthzHandler)
