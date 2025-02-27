@@ -15,7 +15,8 @@ import (
 
 type apiConfig struct {
 	fileserverHits atomic.Int32
-	dbQueries      *database.Queries
+	platform       string
+	db             *database.Queries
 }
 
 func (conf *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
@@ -35,26 +36,18 @@ func main() {
 		log.Fatal("Connection to the DB failed")
 		return
 	}
-	apiConf.dbQueries = database.New(db)
+	apiConf.db = database.New(db)
+	apiConf.platform = os.Getenv("PLATFORM")
 	mux := http.NewServeMux()
 	mux.Handle("/app/", apiConf.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(".")))))
 	mux.HandleFunc("GET /api/healthz", healthzHandler)
 	mux.HandleFunc("GET /admin/metrics", apiConf.metricsHandler)
 	mux.HandleFunc("POST /admin/reset", apiConf.resetHandler)
 	mux.HandleFunc("POST /api/validate_chirp", validateHandler)
+	mux.HandleFunc("POST /api/users", apiConf.handlerCreateUser)
 	server := &http.Server{
 		Addr:    ":8080",
 		Handler: mux,
 	}
 	server.ListenAndServe()
-}
-
-func healthzHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
-	w.WriteHeader(200)
-	w.Write([]byte("OK"))
-}
-
-func (conf *apiConfig) resetHandler(w http.ResponseWriter, r *http.Request) {
-	conf.fileserverHits.Store(0)
 }
