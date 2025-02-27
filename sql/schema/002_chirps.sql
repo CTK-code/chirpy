@@ -6,7 +6,7 @@ CREATE TABLE chirps (
   body TEXT NOT NULL,
   user_id UUID NOT NULL,
   CONSTRAINT user_fk FOREIGN KEY (user_id)
-  REFERENCES users(id)
+  REFERENCES users(id) ON DELETE CASCADE
 ); 
 
 -- +goose Down
