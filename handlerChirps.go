@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/CTK-code/chirpy/internal/auth"
 	"github.com/CTK-code/chirpy/internal/database"
 	"github.com/google/uuid"
 )
@@ -19,8 +20,7 @@ type chirp struct {
 
 func (conf *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
-		Body   string    `json:"body"`
-		UserId uuid.UUID `json:"user_id"`
+		Body string `json:"body"`
 	}
 
 	type res struct {
@@ -29,30 +29,42 @@ func (conf *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request
 		UpdatedAt time.Time `json:"updated_at"`
 		Body      string    `json:"body"`
 		UserId    uuid.UUID `json:"user_id"`
+		Token     string    `json:"token"`
+	}
+
+	// Check that the jwt token is valid
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, 401, "Error authorizing", err)
+	}
+	posterId, err := auth.ValidateJWT(token, conf.secret)
+	if err != nil {
+		respondWithError(w, 401, "error authorizing", err)
 	}
 
 	params := parameters{}
 	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&params)
+	err = decoder.Decode(&params)
 	if err != nil {
 		respondWithError(w, 400, "Error decoding request", err)
 		return
 	}
 	chirpParams := database.CreateChirpParams{
 		Body:   params.Body,
-		UserID: params.UserId,
+		UserID: posterId,
 	}
 	ch, err := conf.db.CreateChirp(r.Context(), chirpParams)
 	if err != nil {
 		respondWithError(w, 400, "Error inserting chirp", err)
 		return
 	}
-	response := chirp{
+	response := res{
 		Id:        ch.ID,
 		CreatedAt: ch.CreatedAt,
 		UpdatedAt: ch.UpdatedAt,
 		Body:      ch.Body,
 		UserId:    ch.UserID,
+		Token:     token,
 	}
 	respondWithJson(w, 201, response)
 }
