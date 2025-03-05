@@ -49,8 +49,12 @@ func main() {
 	mux.HandleFunc("POST /api/users", apiConf.handlerCreateUser)
 	mux.HandleFunc("POST /api/login", apiConf.handlerLoginUser)
 	mux.HandleFunc("POST /api/chirps", apiConf.handlerCreateChirp)
+	mux.HandleFunc("POST /api/refresh", apiConf.refreshHandler)
+	mux.HandleFunc("POST /api/revoke", apiConf.revokeHandler)
+
 	mux.HandleFunc("GET /api/chirps", apiConf.handlerGetAllChirps)
 	mux.HandleFunc("GET /api/chirps/{chirpID}", apiConf.handlerGetChirp)
+
 	server := &http.Server{
 		Addr:    ":8080",
 		Handler: mux,
