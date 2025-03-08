@@ -18,6 +18,7 @@ type apiConfig struct {
 	platform       string
 	db             *database.Queries
 	secret         string
+	polkaKey       string
 }
 
 func (conf *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
@@ -40,6 +41,8 @@ func main() {
 	apiConf.db = database.New(db)
 	apiConf.platform = os.Getenv("PLATFORM")
 	apiConf.secret = os.Getenv("SECRET")
+	apiConf.polkaKey = os.Getenv("POLKA_KEY")
+
 	mux := http.NewServeMux()
 	mux.Handle("/app/", apiConf.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(".")))))
 	mux.HandleFunc("GET /api/healthz", healthzHandler)
