@@ -7,7 +7,6 @@ package database
 
 import (
 	"context"
-	"database/sql"
 
 	"github.com/google/uuid"
 )
@@ -79,7 +78,7 @@ UPDATE users
 `
 
 type UpdateIsChirpyRedByIdParams struct {
-	IsChirpyRed sql.NullBool
+	IsChirpyRed bool
 	ID          uuid.UUID
 }
 

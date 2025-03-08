@@ -1,6 +1,6 @@
 -- +goose Up
 ALTER TABLE users 
-ADD is_chirpy_red BOOLEAN
+ADD is_chirpy_red BOOLEAN NOT NULL
 DEFAULT FALSE;
 
 -- +goose Down
