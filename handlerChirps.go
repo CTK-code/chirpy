@@ -106,3 +106,31 @@ func (conf *apiConfig) handlerGetChirp(w http.ResponseWriter, r *http.Request) {
 	}
 	respondWithJson(w, 200, response)
 }
+
+func (conf *apiConfig) handlerDeleteChirp(w http.ResponseWriter, r *http.Request) {
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, 401, "Error parsing chirpID", err)
+	}
+	userId, err := auth.ValidateJWT(token, conf.secret)
+	if err != nil {
+		respondWithError(w, 401, "could not validate token", err)
+	}
+	id, err := uuid.Parse(r.PathValue("chirpID"))
+	if err != nil {
+		respondWithError(w, 400, "Error parsing chirpID", err)
+	}
+	ch, err := conf.db.GetChirpById(r.Context(), id)
+	if err != nil {
+		respondWithError(w, 404, "Could not retrieve chirp", err)
+	}
+	if ch.UserID != userId {
+		w.WriteHeader(403)
+		return
+	}
+	_, err = conf.db.DeleteChirp(r.Context(), ch.ID)
+	if err != nil {
+		respondWithError(w, 404, "Could not delete chirp", err)
+	}
+	w.WriteHeader(204)
+}

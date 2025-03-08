@@ -55,6 +55,7 @@ func main() {
 
 	mux.HandleFunc("GET /api/chirps", apiConf.handlerGetAllChirps)
 	mux.HandleFunc("GET /api/chirps/{chirpID}", apiConf.handlerGetChirp)
+	mux.HandleFunc("DELETE /api/chirps/{chirpID}", apiConf.handlerDeleteChirp)
 
 	server := &http.Server{
 		Addr:    ":8080",
