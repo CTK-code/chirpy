@@ -22,3 +22,9 @@ UPDATE users
   hashed_password = $2
   WHERE id = $3
   RETURNING *;
+
+-- name: UpdateIsChirpyRedById :one
+UPDATE users
+  SET is_chirpy_red = $1
+  WHERE id = $2
+  RETURNING *;
