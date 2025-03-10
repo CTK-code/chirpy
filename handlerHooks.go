@@ -4,12 +4,22 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/CTK-code/chirpy/internal/auth"
 	"github.com/CTK-code/chirpy/internal/database"
 	"github.com/google/uuid"
 )
 
 func (conf *apiConfig) handlerPolkaHook(w http.ResponseWriter, r *http.Request) {
 	const expected = "user.upgraded"
+
+	apiKey, err := auth.GetAPIKey(r.Header)
+	if err != nil {
+		respondWithError(w, 401, "Error getting APIKey", err)
+	}
+
+	if apiKey != conf.polkaKey {
+		respondWithError(w, 401, "unauthorized access", nil)
+	}
 
 	type request struct {
 		Event string `json:"event"`
@@ -20,7 +30,7 @@ func (conf *apiConfig) handlerPolkaHook(w http.ResponseWriter, r *http.Request) 
 
 	var req request
 	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&req)
+	err = decoder.Decode(&req)
 	if err != nil {
 		respondWithError(w, 400, "error decoding json", err)
 	}
