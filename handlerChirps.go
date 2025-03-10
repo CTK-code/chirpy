@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"sort"
 	"time"
 
 	"github.com/CTK-code/chirpy/internal/auth"
@@ -71,6 +72,7 @@ func (conf *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request
 
 func (conf *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Request) {
 	authorIdQuery := r.URL.Query().Get("author_id")
+	sortByQuery := r.URL.Query().Get("sort")
 	var chirps []database.Chirp
 	if authorIdQuery != "" {
 		authorId, err := uuid.Parse(authorIdQuery)
@@ -99,6 +101,11 @@ func (conf *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Reques
 			UserId:    ch.UserID,
 		}
 		chirpArr = append(chirpArr, response)
+	}
+	if sortByQuery == "desc" {
+		sort.Slice(chirpArr, func(i, j int) bool {
+			return chirpArr[i].CreatedAt.After(chirpArr[j].CreatedAt)
+		})
 	}
 	respondWithJson(w, 200, chirpArr)
 }
