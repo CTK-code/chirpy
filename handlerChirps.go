@@ -70,9 +70,24 @@ func (conf *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request
 }
 
 func (conf *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Request) {
-	chirps, err := conf.db.GetAllChirps(r.Context())
-	if err != nil {
-		respondWithError(w, 400, "Error getting chirps", err)
+	authorIdQuery := r.URL.Query().Get("author_id")
+	var chirps []database.Chirp
+	if authorIdQuery != "" {
+		authorId, err := uuid.Parse(authorIdQuery)
+		if err != nil {
+			respondWithError(w, 400, "Error getting chirps", err)
+		}
+		chirps, err = conf.db.GetChirpsByAuthor(r.Context(), authorId)
+		if err != nil {
+			respondWithError(w, 400, "could not find auhtors chirps", err)
+		}
+	} else {
+		var err error
+		chirps, err = conf.db.GetAllChirps(r.Context())
+		if err != nil {
+			respondWithError(w, 400, "Error getting chirps", err)
+		}
+
 	}
 	chirpArr := []chirp{}
 	for _, ch := range chirps {
